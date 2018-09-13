@@ -1,0 +1,284 @@
+---
+title: "Identity Fraud Detection DQR"
+output: html_notebook
+---
+
+Loading the packages and data
+```{r}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(lubridate)
+library(tidyr)
+library(scales)
+data=read.csv("applications.csv")
+summary(data)
+```
+
+There are all together 10 variables, with 9 predictors and 1 response (fraud). We will first have some rough understanding of the dataset with summary statistics.
+```{r}
+# Understand the data type of each variable
+str(data)
+
+#Count the number of NAs in each column
+t(data%>%
+  select(everything())%>%
+  summarise_all(funs(sum(is.na(.)))))# There is no missing data in the dataset
+
+#Count the number of unique values in each column
+t(data%>%
+  select(everything())%>%
+  summarise_all(funs(length(unique(.)))))
+
+#Find out the mode for each column
+Mode <- function(x) {
+  ux <- unique(x[!is.na(x)])
+  ux[which.max(tabulate(match(x, ux)))]
+}
+sapply(data, Mode)
+```
+
+After having an overview of the dataset with summary statistics, we start to look at each column specifically with appropriate visualizations.
+
+# SSN
+```{r}
+## ssn:remove
+ssn_top=data %>%
+  group_by(ssn) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(21)
+#Plot
+ggplot(ssn_top,aes(x=reorder(ssn,-count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 SSNs',x='SSN')+
+  theme( axis.text.x = element_text(angle = 45, hjust = 1),
+         plot.title = element_text(hjust = 0.5),
+         text = element_text(size=20))
+
+### remove the most frequent SSN: 737610282
+ssn_top=ssn_top[-1,]
+ssn_top$ssn=as.factor(ssn_top$ssn)
+### plot the top 10 records
+ggplot(ssn_top,aes(x=reorder(ssn,-count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 SSNs (Removed Abnormality)',x='SSN')+
+  theme( axis.text.x = element_text(angle = 45, hjust = 1),
+         plot.title = element_text(hjust = 0.5),
+         text = element_text(size=20))
+```
+
+# Firstname
+```{r}
+## firstname
+fn_top=data %>%
+  group_by(firstname) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(20)
+### plot the top 10 records
+ggplot(fn_top,aes(x=reorder(firstname,-count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 First Names',x='Firstname')+
+  theme( axis.text.x = element_text(angle = 45, hjust = 1),
+         plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))
+```
+
+# Firstname
+```{r}
+## lastname
+ln_top=data %>%
+  group_by(lastname) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(20)
+### plot the top 10 records
+ggplot(ln_top,aes(x=reorder(lastname,-count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 Last Names',x='Lastname')+
+  theme( axis.text.x = element_text(angle = 45, hjust = 1),
+         plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))
+```
+
+# ZIP5
+```{r}
+## zip5
+zip5_top=data %>%
+  group_by(zip5) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(20)
+### plot the top 10 records
+ggplot(zip5_top,aes(x=reorder(zip5,-count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 Zips',x='Zip')+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size=15))
+```
+
+# homephone
+```{r}
+## homephone: remove the most frequent record: 9105580920
+homephone_top=data %>%
+  group_by(homephone) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(11)
+#Plot
+ggplot(homephone_top,aes(x=reorder(homephone,count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 10 Homephone',x='Homephone')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  coord_flip()
+
+#Remove the top 1
+homephone_top=homephone_top[-1,]
+### plot the top 10 records
+ggplot(homephone_top,aes(x=reorder(homephone,count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 10 Homephone (Removed Abnormality)',x='Homephone')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  coord_flip()
+```
+
+#date
+```{r}
+#Convert the date into time format
+data$date=mdy(data$date)
+data$date=as.character(data$date)
+## date
+date_top=data %>%
+  group_by(date) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(20)
+### plot the top 10 records
+ggplot(date_top,aes(x=reorder(date,count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 Application Dates',x='Date')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  coord_flip()
+## plot the distribution of application for 12 months
+ggplot(data,aes(x=as.factor(month(date))))+
+  geom_bar(stat = "count", fill='#8da0cb')+
+  labs(x='Month',title='Distribution of Applications among 12 Months')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))
+
+# Daily application trend
+ggplot(data,aes(x=date))+
+  geom_line(stat = "count", color='#8da0cb')+
+  labs(title='Application Trend Throughout 2016 (Daily Basis)')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))
+
+# Weekly application trend
+ggplot(data,aes(x=as.factor(week(date)),group=1))+
+  geom_line(stat = "count", color='#8da0cb')+
+  labs(x='Weeks',title='Application Trend Throughout 2016 (Weekly Basis)')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  scale_x_discrete(breaks=seq(1,53,10))
+
+# Weekly application trend
+ggplot(data,aes(x=as.factor(month(date)),group=1))+
+  geom_line(stat = "count", color='#8da0cb')+
+  labs(x='Months',title='Application Trend Throughout 2016 (Monthly Basis)')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  ylim(c(0,9000))
+```
+
+#dob
+```{r}
+## dob
+### transform year format
+data$dob=as.character(data$dob)
+
+#Split the dob into month, day, and year with only the last two digits
+dob_split=data %>%
+  separate(dob,into=c('month','day','year_l2'),sep='/') %>%
+  select(month,day,year_l2,record)
+dob_split$year=as.numeric(dob_split$year_l2)
+
+#add 0 to the years with only one digit. so '7' is tramsformed into '07'
+dob_split$year=str_pad(dob_split$year_l2,2,pad='0')
+#set all the date to 1900s.
+dob_split=mutate(dob_split,year_f2=19)
+
+#Combine all the the year_f2 with year_l2 to get a four digit year column, and then combine all the year, month, and day back to get a transformed dob.
+dob_split$year_l2=as.character(dob_split$year_l2)
+dob_agg=dob_split %>%
+  unite(year,year_f2,year_l2,sep='',remove=FALSE) %>%
+  unite(dob_n,month,day,year,sep='/',remove=FALSE)
+
+### merge new dob, year, month with original data dataset 
+data=merge(data,dob_agg,by='record')
+str(data)
+data=data %>%
+  select(-year_f2,-year_l2,-day,-month,-year.1,-year)
+
+### change the dob column into time format with lubridate
+data$dob_n = as.character(data$dob_n)
+data$dob=as.Date(data$dob_n, "%m/%d/%Y")
+data=data[,-11]#delete dob_n
+data$dob=as.character(data$dob)
+
+#data$date[which(is.na(mdy(data$dob_n)))]
+#### Find two observations that failed to parse through lubridate, though the two dobs look good in formate. Probably bug in package. Changed to use as.Date() function.
+
+### plot
+dob_top=data %>%
+  group_by(dob) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(10)
+
+### plot the top 10 records
+library(scales)
+ggplot(dob_top,aes(x=reorder(dob,count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 10 Date of Birth',x='Date of Birth')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  scale_y_continuous(trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x) 10^x),
+    labels = trans_format("log10", math_format(10^.x)))+#scale the x-axis to log form to strech the low bars.
+  coord_flip()
+```
+
+#text variable: address
+```{r}
+## address
+address_top=data %>%
+  group_by(address) %>%
+  summarize(count=n()) %>%
+  arrange(-count) %>%
+  head(20)
+### plot the top 10 records
+ggplot(address_top,aes(x=reorder(address,count),y=count))+
+  geom_bar(stat = 'identity', fill='#8da0cb')+
+  labs(title='Distribution of Top 20 Address',x='Address')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))+
+  coord_flip()
+```
+
+#fraud
+```{r}
+data$fraud=as.factor(data$fraud)
+summary(data$fraud)
+
+ggplot(data,aes(x=fraud,fill=fraud))+
+  geom_bar(stat = 'count', fill=c('#8da0cb','#fc8d62'))+
+  labs(title='Distribution of Fraud',x='fraud')+
+  theme(plot.title = element_text(hjust = 0.5),
+         text = element_text(size=15))
+```
+
