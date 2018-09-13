@@ -1,10 +1,10 @@
 # Identity_Fraud_Detection
 The repository is created for a fraud analytics project focusing on using supervised machine learning algorithms to detect identity frauds in applicants
 
-# Project Overview
+## Project Overview
 This report examines the Application dataset to detect the fraud activity using supervised machine learning methods. Out team used R as the major tool, “Kolmogorov-Smirnov” as the main feature selection method, and Support Vector Machine, Gradient Boosting Decision Trees, Logistic Regression and Neural Network as featured algorithms to build the predictive model.
 
-# Analysis Description
+## Analysis Description
 The steps we took were:
 1. Variable construction and data cleaning
 2. Feature selection using “Kolmogorov-Smirnov” test
