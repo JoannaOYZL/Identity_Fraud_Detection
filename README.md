@@ -1,4 +1,4 @@
-# Identity_Fraud_Detection
+# Supervised Identity Fraud Detection
 The repository is created for a fraud analytics project focusing on using supervised machine learning algorithms to detect identity frauds in applicants
 
 ## Project Overview
